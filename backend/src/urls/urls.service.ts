@@ -32,16 +32,25 @@ export class UrlsService {
       return existing;
     }
 
-    // Generate a unique slug
-    const slug = nanoid();
+    // Try generating and saving a unique slug
+    let slug: string;
 
-    // Create and persist the new URL entry
-    const url = this.urlRepository.create({
-      originalUrl: original_url,
-      slug: slug,
-    });
+    // Keep trying until we find a unique slug
+    while (true) {
+      slug = nanoid();
 
+      const slugExists = await this.urlRepository.findOne({
+        where: { slug },
+      });
+
+      if (!slugExists) {
+        break;
+      }
+    }
+
+    const url = this.urlRepository.create({ originalUrl: original_url, slug });
     await this.urlRepository.save(url);
+
     return { slug: url.slug };
   }
 
